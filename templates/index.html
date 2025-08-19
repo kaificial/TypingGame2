@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyra - Minimal Typing Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">
+                        <i class="fas fa-keyboard"></i>
+                        <span>Keyra</span>
+                    </div>
+                    <div class="version">v2.0</div>
+                </div>
+                
+                <nav class="nav-menu">
+                    <button class="nav-btn active" data-section="typing">
+                        <i class="fas fa-typing"></i>
+                        <span>Type</span>
+                    </button>
+                    <button class="nav-btn" data-section="code">
+                        <i class="fas fa-code"></i>
+                        <span>Code</span>
+                    </button>
+                    <button class="nav-btn" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section id="typing-section" class="content-section active">
+                <div class="typing-container">
+                    <div class="stats-bar">
+                        <div class="stat-group">
+                            <div class="stat">
+                                <div class="stat-value" id="wpm">0</div>
+                                <div class="stat-label">WPM</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="accuracy">100%</div>
+                                <div class="stat-label">Accuracy</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="timer">0s</div>
+                                <div class="stat-label">Time</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-group">
+                            <div class="stat">
+                                <div class="stat-value" id="characters">0</div>
+                                <div class="stat-label">Chars</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="errors">0</div>
+                                <div class="stat-label">Errors</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="consistency">100%</div>
+                                <div class="stat-label">Consistency</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-panel">
+                        <div class="config-section">
+                            <h3>Test Mode</h3>
+                            <div class="config-options">
+                                <button class="config-btn active" data-test="time" data-value="30">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Time</span>
+                                </button>
+                                <button class="config-btn" data-test="words" data-value="25">
+                                    <i class="fas fa-font"></i>
+                                    <span>Words</span>
+                                </button>
+                                <button class="config-btn" data-test="code">
+                                    <i class="fas fa-code"></i>
+                                    <span>Code</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="config-section" id="duration-section">
+                            <h3>Duration</h3>
+                            <div class="config-options">
+                                <button class="config-btn active" data-duration="15">15s</button>
+                                <button class="config-btn" data-duration="30">30s</button>
+                                <button class="config-btn" data-duration="60">1m</button>
+                                <button class="config-btn" data-duration="120">2m</button>
+                                <button class="config-btn" data-duration="300">5m</button>
+                            </div>
+                        </div>
+
+                        <div class="config-section" id="word-count-section" style="display: none;">
+                            <h3>Word Count</h3>
+                            <div class="config-options">
+                                <button class="config-btn" data-words="10">10</button>
+                                <button class="config-btn active" data-words="25">25</button>
+                                <button class="config-btn" data-words="50">50</button>
+                                <button class="config-btn" data-words="100">100</button>
+                                <button class="config-btn" data-words="200">200</button>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h3>Content</h3>
+                            <div class="content-selector">
+                                <select id="language-select" class="select-input">
+                                    <option value="english">English</option>
+                                </select>
+                                
+                                <select id="category-select" class="select-input">
+                                    <option value="tech">Technology</option>
+                                    <option value="science">Science</option>
+                                    <option value="philosophy">Philosophy</option>
+                                </select>
+                                
+                                <select id="code-language-select" class="select-input" style="display: none;">
+                                    <option value="python">Python</option>
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="java">Java</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h3>Options</h3>
+                            <div class="option-toggles">
+                                <label class="toggle">
+                                    <input type="checkbox" id="numbers-toggle">
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Numbers</span>
+                                </label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="sound-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Sound</span>
+                                </label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="random-toggle">
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Random Words</span>
+                                </label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="api-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Live Content</span>
+                                    <i class="fas fa-info-circle info-tooltip" title="Live Content fetches real content from the internet: Philosophy quotes, Science articles from Wikipedia, and Technology news. When disabled, uses local predefined content."></i>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="typing-area">
+                        <div class="text-display" id="textDisplay">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading content...</span>
+                            </div>
+                        </div>
+
+                        <div class="input-area">
+                            <textarea id="textInput" placeholder="Click here or start typing to begin..." 
+                                      autocomplete="off" spellcheck="false" rows="1"></textarea>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-text" id="progressText">0%</div>
+                        </div>
+                    </div>
+                    <div class="control-buttons">
+                        <button id="restartBtn" class="control-btn">
+                            <i class="fas fa-redo"></i>
+                            <span>Restart</span>
+                        </button>
+                        <button id="newTextBtn" class="control-btn">
+                            <i class="fas fa-random"></i>
+                            <span>New Text</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+            <section id="code-section" class="content-section">
+                <div class="typing-container">
+                    <div class="stats-bar">
+                        <div class="stat-group">
+                            <div class="stat">
+                                <div class="stat-value" id="code-wpm">0</div>
+                                <div class="stat-label">WPM</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="code-accuracy">100%</div>
+                                <div class="stat-label">Accuracy</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="code-timer">0s</div>
+                                <div class="stat-label">Time</div>
+                            </div>
+                        </div>
+                        <div class="stat-group">
+                            <div class="stat">
+                                <div class="stat-value" id="code-characters">0</div>
+                                <div class="stat-label">Chars</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="code-errors">0</div>
+                                <div class="stat-label">Errors</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="code-consistency">100%</div>
+                                <div class="stat-label">Consistency</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="config-panel">
+                        <div class="config-section">
+                            <h3>Language</h3>
+                            <div class="config-options">
+                                <button class="config-btn active" data-code-lang="python">
+                                    <i class="fab fa-python"></i>
+                                    <span>Python</span>
+                                </button>
+                                <button class="config-btn" data-code-lang="javascript">
+                                    <i class="fab fa-js-square"></i>
+                                    <span>JavaScript</span>
+                                </button>
+                                <button class="config-btn" data-code-lang="java">
+                                    <i class="fab fa-java"></i>
+                                    <span>Java</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h3>Options</h3>
+                            <div class="option-toggles">
+                                <label class="toggle">
+                                    <input type="checkbox" id="code-sound-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Sound</span>
+                                </label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="code-cursor-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Cursor</span>
+                                </label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="code-indent-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Auto Indent</span>
+                                </label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="code-random-toggle">
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Random Code</span>
+                                </label>
+                            </div>
+                            <div class="code-hints">
+                                <small>💡 Tab: Insert 4 spaces | Shift+Tab: Reduce indentation | Enter: New line with the auto-indent</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="typing-area">
+                        <div class="text-display code-display" id="codeTextDisplay">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading code...</span>
+                            </div>
+                        </div>
+                        <div class="input-area">
+                            <textarea id="codeTextInput" placeholder="Start typing code here..."></textarea>
+                        </div>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="codeProgressFill"></div>
+                            </div>
+                            <div class="progress-text" id="codeProgressText">0%</div>
+                        </div>
+
+                        <div class="control-buttons">
+                            <button class="control-btn" id="codeRestartBtn">
+                                <i class="fas fa-redo"></i>
+                                <span>Restart</span>
+                            </button>
+                            <button class="control-btn" id="codeNewTextBtn">
+                                <i class="fas fa-sync"></i>
+                                <span>New Code</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="settings-section" class="content-section">
+                <div class="settings-container">
+                    <h2>Settings</h2>
+                    
+                    <div class="settings-group">
+                        <h3>Appearance</h3>
+                        <div class="setting-item">
+                            <label>Theme</label>
+                            <select class="setting-input" id="theme-select">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Font Size</label>
+                            <input type="range" id="font-size-slider" min="12" max="24" value="16" class="setting-slider">
+                            <span id="font-size-value">16px</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Typing</h3>
+                        <div class="setting-item">
+                            <label>Show Cursor</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="cursor-toggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>Sound Effects</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="sound-effects-toggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Random Word Generator</h3>
+                        <div class="setting-item">
+                            <label>Word Count</label>
+                            <input type="number" id="word-count-input" min="1" max="100" value="10" class="setting-input">
+                        </div>
+                        <div class="setting-item">
+                            <label>Category</label>
+                            <select id="word-category-select" class="setting-input">
+                                <option value="common">Common Words</option>
+                                <option value="tech">Tech Words</option>
+                                <option value="programming">Programming Words</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <button class="setting-btn" id="generate-words">
+                                <i class="fas fa-random"></i>
+                                Generate Words
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="setting-btn" id="generate-sentence">
+                                <i class="fas fa-font"></i>
+                                Generate Sentence
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="setting-btn" id="generate-paragraph">
+                                <i class="fas fa-paragraph"></i>
+                                Generate Paragraph
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <div id="generated-content" class="generated-content">
+                                <textarea id="generated-text" placeholder="Generated content will appear here..." readonly></textarea>
+                                <button class="setting-btn" id="copy-generated">
+                                    <i class="fas fa-copy"></i>
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Data</h3>
+                        <div class="setting-item">
+                            <button class="setting-btn" id="export-data">
+                                <i class="fas fa-download"></i>
+                                Export Data
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="setting-btn danger" id="clear-data">
+                                <i class="fas fa-trash"></i>
+                                Clear All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <div id="resultsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Test Complete!</h2>
+                    <button class="modal-close" id="closeModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="results-grid">
+                    <div class="result-card primary">
+                        <div class="result-value" id="finalWpm">0</div>
+                        <div class="result-label">WPM</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-value" id="finalAccuracy">100%</div>
+                        <div class="result-label">Accuracy</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-value" id="finalTime">0s</div>
+                        <div class="result-label">Time</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-value" id="finalChars">0</div>
+                        <div class="result-label">Characters</div>
+                    </div>
+                </div>
+
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Errors:</span>
+                        <span class="detail-value" id="finalErrors">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Consistency:</span>
+                        <span class="detail-value" id="finalConsistency">100%</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Test Type:</span>
+                        <span class="detail-value" id="finalTestType">Time</span>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="tryAgainBtn" class="btn btn-primary">
+                        <i class="fas fa-redo"></i>
+                        Try Again
+                    </button>
+                    <button id="shareResultBtn" class="btn btn-secondary">
+                        <i class="fas fa-share"></i>
+                        Share Result
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="toast" class="toast">
+            <div class="toast-content">
+                <i class="toast-icon"></i>
+                <span class="toast-message"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
