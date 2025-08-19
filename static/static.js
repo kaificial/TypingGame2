@@ -284,7 +284,7 @@ class TypingTest {
         this.totalChars = 0;
         this.timer = null;
         this.testMode = 'time';
-        this.testDuration = 30;
+        this.testDuration = 15; // Changed to match the active button in HTML
         this.testWordCount = 25;
         this.soundEnabled = true;
         this.randomMode = false;
@@ -306,6 +306,7 @@ class TypingTest {
 
         this.initializeElements();
         this.bindEvents();
+        this.initializeFromActiveButtons();
         this.loadNewText();
         this.initializeSounds();
     }
@@ -381,6 +382,27 @@ class TypingTest {
                 this.textInput.focus();
             }
         });
+    }
+
+    initializeFromActiveButtons() {
+        // Initialize duration from active button
+        const activeDurationBtn = document.querySelector('.config-btn[data-duration].active');
+        if (activeDurationBtn) {
+            this.testDuration = parseInt(activeDurationBtn.dataset.duration);
+        }
+
+        // Initialize word count from active button
+        const activeWordsBtn = document.querySelector('.config-btn[data-words].active');
+        if (activeWordsBtn) {
+            this.testWordCount = parseInt(activeWordsBtn.dataset.words);
+        }
+
+        // Initialize test mode from active button
+        const activeTestBtn = document.querySelector('.config-btn[data-test].active');
+        if (activeTestBtn) {
+            this.testMode = activeTestBtn.dataset.test;
+            this.showHideConfigSections();
+        }
     }
 
     async loadNewText() {
