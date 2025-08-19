@@ -2,24 +2,13 @@ from flask import Flask, render_template, jsonify, request
 import random
 import json
 import time
-import requests
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 
 app = Flask(__name__)
 
 
-CACHE_DURATION = 300  # 5 minutes -cache
-API_TIMEOUT = 10  # in seconds
 
-WIKIPEDIA_API_URL = "https://en.wikipedia.org/api/rest_v1/page/random/summary"
-QUOTES_API_URL = "https://api.quotable.io/random"
-
-# Cache for API   to avoid rate limiting
-api_cache = {
-    'wikipedia': {'data': [], 'last_update': None},
-    'quotes': {'data': [], 'last_update': None}
-}
 
 COMMON_WORDS = [
     'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 
@@ -227,101 +216,7 @@ for (int {random.choice(var_names)} = 0; {random.choice(var_names)} < 10; {rando
         return random.choice(templates)
 
 
-class APIManager:
-    """Manages external API calls and caching"""
-    
-    @staticmethod
-    def is_cache_valid(cache_type: str) -> bool:
-        """Check if cache is still valid"""
-        if cache_type not in api_cache:
-            return False
-        cache = api_cache[cache_type]
-        if not cache['last_update']:
-            return False
-        return (datetime.now() - cache['last_update']).seconds < CACHE_DURATION
 
-    @staticmethod
-    def update_cache(cache_type: str, data: List[Dict[str, Any]]) -> None:
-        """Update cache with new data"""
-        api_cache[cache_type] = {
-            'data': data,
-            'last_update': datetime.now()
-        }
-
-    @staticmethod
-    def fetch_wikipedia_content(topic: Optional[str] = None) -> Optional[Dict[str, Any]]:
-        """Fetch random Wikipedia content for a given topic"""
-        try:
-            if APIManager.is_cache_valid('wikipedia'):
-                return random.choice(api_cache['wikipedia']['data'])
-            
-            articles = []
-            for _ in range(5):
-                response = requests.get(WIKIPEDIA_API_URL, timeout=API_TIMEOUT)
-                if response.status_code == 200:
-                    data = response.json()
-                    if topic and topic.lower() in data.get('extract', '').lower():
-                        articles.append(data)
-                    elif not topic:
-                        articles.append(data)
-            
-            if articles:
-                APIManager.update_cache('wikipedia', articles)
-                return random.choice(articles)
-            
-            return None
-        except Exception as e:
-            print(f"Error fetching Wikipedia content: {e}")
-            return None
-
-    @staticmethod
-    def fetch_philosophy_quotes() -> Optional[Dict[str, Any]]:
-        """Fetch philosophy quotes from quotable.io"""
-        try:
-            if APIManager.is_cache_valid('quotes'):
-                return random.choice(api_cache['quotes']['data'])
-            
-            quotes = []
-            for _ in range(5):
-                response = requests.get(f"{QUOTES_API_URL}?tags=philosophy|wisdom", timeout=API_TIMEOUT)
-                if response.status_code == 200:
-                    data = response.json()
-                    quotes.append(data)
-            
-            if quotes:
-                APIManager.update_cache('quotes', quotes)
-                return random.choice(quotes)
-            
-            return None
-        except Exception as e:
-            print(f"Error fetching quotes: {e}")
-            return None
-
-    @staticmethod
-    def fetch_science_news() -> Optional[Dict[str, Any]]:
-        """Fetch science news from Wikipedia"""
-        return APIManager.fetch_wikipedia_content("science")
-
-    @staticmethod
-    def fetch_tech_news() -> Optional[Dict[str, Any]]:
-        """Fetch technology news from Wikipedia"""
-        return APIManager.fetch_wikipedia_content("technology")
-
-    @staticmethod
-    def format_api_content(content: Dict[str, Any], content_type: str) -> str:
-        """Format API content for typing tests"""
-        if content_type == 'philosophy':
-            if 'quote' in content:
-                return f"{content['quote']} - {content.get('author', 'Unknown')}"
-            elif 'extract' in content:
-                return content['extract']
-        elif content_type in ['science', 'tech']:
-            if 'extract' in content:
-                return content['extract']
-            elif 'title' in content and 'description' in content:
-                return f"{content['title']}. {content['description']}"
-        
-        return ContentGenerator.generate_random_paragraph(3, COMMON_WORDS)
 
 
 # Content collections
@@ -544,151 +439,177 @@ def index():
 @app.route('/api/text')
 def get_text():
     """Get text based on various parameters"""
-    content_type = request.args.get('type', 'text')
-    language = request.args.get('language', 'english')
-    category = request.args.get('category', 'tech')
-    difficulty = request.args.get('difficulty', 'medium')
-    random_mode = request.args.get('random', 'false').lower() == 'true'
-    use_api = request.args.get('api', 'true').lower() == 'true'
+    try:
+        content_type = request.args.get('type', 'text')
+        language = request.args.get('language', 'english')
+        category = request.args.get('category', 'tech')
+        difficulty = request.args.get('difficulty', 'medium')
+        random_mode = request.args.get('random', 'false').lower() == 'true'
+        duration = int(request.args.get('duration', 30)) if request.args.get('duration') else 30  # Default to 30 seconds
     
-    if content_type == 'code':
-        lang = request.args.get('code_language', 'python')
-        
-        if random_mode:
-            code = ContentGenerator.generate_random_code_snippet(lang, difficulty)
-            return jsonify({
-                'text': code,
-                'type': 'code',
-                'language': lang,
-                'description': f'Random {lang} code',
-                'random': True
-            })
-        else:
-            if lang in CODE_SNIPPETS:
-                snippet = random.choice(CODE_SNIPPETS[lang])
+        if content_type == 'code':
+            lang = request.args.get('code_language', 'python')
+            
+            if random_mode:
+                # Generate longer code for longer durations
+                if duration >= 60:  # 1 minute or more
+                    num_snippets = 3
+                elif duration >= 30:  # 30 seconds
+                    num_snippets = 2
+                else:  # 15 seconds or less
+                    num_snippets = 1
+                
+                code_snippets = []
+                for _ in range(num_snippets):
+                    code_snippets.append(ContentGenerator.generate_random_code_snippet(lang, difficulty))
+                
+                code = '\n\n'.join(code_snippets)
                 return jsonify({
-                    'text': snippet['code'],
+                    'text': code,
                     'type': 'code',
                     'language': lang,
-                    'description': snippet['description'],
-                    'random': False
+                    'description': f'Random {lang} code',
+                    'random': True
                 })
             else:
-                snippet = random.choice(CODE_SNIPPETS['python'])
-                return jsonify({
-                    'text': snippet['code'],
-                    'type': 'code',
-                    'language': 'python',
-                    'description': snippet['description'],
-                    'random': False
-                })
-    if use_api and not random_mode:
-        api_content = None
+                if lang in CODE_SNIPPETS:
+                    # Select multiple snippets for longer durations
+                    if duration >= 60:  # 1 minute or more
+                        selected_snippets = random.sample(CODE_SNIPPETS[lang], min(3, len(CODE_SNIPPETS[lang])))
+                    elif duration >= 30:  # 30 seconds
+                        selected_snippets = random.sample(CODE_SNIPPETS[lang], min(2, len(CODE_SNIPPETS[lang])))
+                    else:  # 15 seconds or less
+                        selected_snippets = [random.choice(CODE_SNIPPETS[lang])]
+                    
+                    code = '\n\n'.join([snippet['code'] for snippet in selected_snippets])
+                    return jsonify({
+                        'text': code,
+                        'type': 'code',
+                        'language': lang,
+                        'description': f'Multiple {lang} snippets',
+                        'random': False
+                    })
+                else:
+                    snippet = random.choice(CODE_SNIPPETS['python'])
+                    return jsonify({
+                        'text': snippet['code'],
+                        'type': 'code',
+                        'language': 'python',
+                        'description': snippet['description'],
+                        'random': False
+                    })
+
         
-        if category == 'philosophy':
-            api_content = APIManager.fetch_philosophy_quotes()
-        elif category == 'science':
-            api_content = APIManager.fetch_science_news()
-        elif category == 'tech':
-            api_content = APIManager.fetch_tech_news()
-        
-        if api_content:
-            formatted_content = APIManager.format_api_content(api_content, category)
+        if random_mode:
+            if category == 'tech':
+                word_list = TECH_WORDS + COMMON_WORDS
+            else:
+                word_list = COMMON_WORDS
+            
+            # Generate longer text for longer durations to ensure users don't run out of words
+            if duration >= 60:  # 1 minute or more
+                num_paragraphs = 15  # Increased from 8 to 15 for ~100+ words
+            elif duration >= 30:  # 30 seconds
+                num_paragraphs = 5
+            else:  # 15 seconds or less
+                num_paragraphs = 3
+            
+            text = ContentGenerator.generate_random_paragraph(num_paragraphs, word_list)
+            
             return jsonify({
-                'text': formatted_content,
+                'text': text,
                 'type': 'text',
                 'language': language,
                 'category': category,
-                'random': False,
-                'source': 'api'
+                'random': True
             })
-    
-    if random_mode:
-        if category == 'tech':
-            word_list = TECH_WORDS + COMMON_WORDS
-        else:
-            word_list = COMMON_WORDS
         
-        if difficulty == 'easy':
-            text = ContentGenerator.generate_random_paragraph(2, word_list)
-        elif difficulty == 'hard':
-            text = ContentGenerator.generate_random_paragraph(5, word_list)
+        # For non-random mode, combine multiple texts to ensure sufficient length
+        if language in LANGUAGES and category in LANGUAGES[language]['texts']:
+            texts = LANGUAGES[language]['texts'][category]
         else:
-            text = ContentGenerator.generate_random_paragraph(3, word_list)
+            texts = TEXT_COLLECTIONS[category]
+        
+        # Combine multiple texts for longer durations
+        if duration >= 60:  # 1 minute or more
+            selected_texts = random.sample(texts, min(5, len(texts)))  # Increased from 3 to 5
+            text = ' '.join(selected_texts)
+        elif duration >= 30:  # 30 seconds
+            selected_texts = random.sample(texts, min(2, len(texts)))
+            text = ' '.join(selected_texts)
+        else:  # 15 seconds or less
+            text = random.choice(texts)
         
         return jsonify({
             'text': text,
             'type': 'text',
             'language': language,
             'category': category,
-            'random': True
+            'random': False
         })
-    if language in LANGUAGES and category in LANGUAGES[language]['texts']:
-        texts = LANGUAGES[language]['texts'][category]
-        text = random.choice(texts)
-    else:
-        texts = TEXT_COLLECTIONS[category]
-        text = random.choice(texts)
-    
-    return jsonify({
-        'text': text,
-        'type': 'text',
-        'language': language,
-        'category': category,
-        'random': False
-    })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @app.route('/api/random-words')
 def get_random_words():
     """Generate random words for custom text creation"""
-    count = int(request.args.get('count', 10))
-    category = request.args.get('category', 'common')
-    
-    if category == 'tech':
-        word_list = TECH_WORDS
-    elif category == 'programming':
-        word_list = PROGRAMMING_WORDS
-    else:
-        word_list = COMMON_WORDS
-    
-    words = random.choices(word_list, k=min(count, len(word_list)))
-    return jsonify({'words': words})
+    try:
+        count = int(request.args.get('count', 10))
+        category = request.args.get('category', 'common')
+        
+        if category == 'tech':
+            word_list = TECH_WORDS
+        elif category == 'programming':
+            word_list = PROGRAMMING_WORDS
+        else:
+            word_list = COMMON_WORDS
+        
+        words = random.choices(word_list, k=min(count, len(word_list)))
+        return jsonify({'words': words})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @app.route('/api/generate-sentence')
 def generate_sentence():
     """Generate a single random sentence"""
-    min_words = int(request.args.get('min_words', 5))
-    max_words = int(request.args.get('max_words', 15))
-    category = request.args.get('category', 'common')
-    
-    if category == 'tech':
-        word_list = TECH_WORDS + COMMON_WORDS
-    elif category == 'programming':
-        word_list = PROGRAMMING_WORDS + COMMON_WORDS
-    else:
-        word_list = COMMON_WORDS
-    
-    sentence = ContentGenerator.generate_random_sentence(min_words, max_words, word_list)
-    return jsonify({'sentence': sentence})
+    try:
+        min_words = int(request.args.get('min_words', 5))
+        max_words = int(request.args.get('max_words', 15))
+        category = request.args.get('category', 'common')
+        
+        if category == 'tech':
+            word_list = TECH_WORDS + COMMON_WORDS
+        elif category == 'programming':
+            word_list = PROGRAMMING_WORDS + COMMON_WORDS
+        else:
+            word_list = COMMON_WORDS
+        
+        sentence = ContentGenerator.generate_random_sentence(min_words, max_words, word_list)
+        return jsonify({'sentence': sentence})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @app.route('/api/generate-paragraph')
 def generate_paragraph():
     """Generate a random paragraph"""
-    num_sentences = int(request.args.get('sentences', 3))
-    category = request.args.get('category', 'common')
-    
-    if category == 'tech':
-        word_list = TECH_WORDS + COMMON_WORDS
-    elif category == 'programming':
-        word_list = PROGRAMMING_WORDS + COMMON_WORDS
-    else:
-        word_list = COMMON_WORDS
-    
-    paragraph = ContentGenerator.generate_random_paragraph(num_sentences, word_list)
-    return jsonify({'paragraph': paragraph})
+    try:
+        num_sentences = int(request.args.get('sentences', 3))
+        category = request.args.get('category', 'common')
+        
+        if category == 'tech':
+            word_list = TECH_WORDS + COMMON_WORDS
+        elif category == 'programming':
+            word_list = PROGRAMMING_WORDS + COMMON_WORDS
+        else:
+            word_list = COMMON_WORDS
+        
+        paragraph = ContentGenerator.generate_random_paragraph(num_sentences, word_list)
+        return jsonify({'paragraph': paragraph})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @app.route('/api/categories')
@@ -752,4 +673,4 @@ def get_leaderboard():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host='0.0.0.0')
